@@ -1,252 +1,140 @@
-// ------------------------------------ SISTEMA SOLAR ----------------------------------------- //
+const canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
 
-let sun = new Image();
-let moon = new Image();
-let earth = new Image();
-function init() {
-  sun.src = "canvas_sun.png";
-  moon.src = "canvas_moon.png";
-  earth.src = "canvas_earth.png";
-  window.requestAnimationFrame(draw);
-}
+const window_height = 300;
+const window_width = 500;
 
-function draw() {
-  let ctx = document.getElementById("canvasSolarSystem").getContext("2d");
+canvas.height = window_height;
+canvas.width = window_width;
 
-  ctx.globalCompositeOperation = "destination-over";
-  ctx.clearRect(0, 0, 300, 300); // limpiar canvas
+canvas.style.backgroundColor = "#b7f7ed";
 
-  ctx.fillStyle = "rgba(0,0,0,0.4)";
-  ctx.strokeStyle = "rgba(0,153,255,0.4)";
-  ctx.save();
-  ctx.translate(150, 150);
+class Circle {
+  constructor(x, y, radius, color, text, backcolor, speed) {
+    this.posX = x;
+    this.posY = y;
+    this.radius = radius;
+    this.color = color;
+    this.text = text;
+    this.backcolor = backcolor;
+    this.speed = speed;
 
-  // La tierra
-  let time = new Date();
-  ctx.rotate(
-    ((2 * Math.PI) / 60) * time.getSeconds() +
-      ((2 * Math.PI) / 60000) * time.getMilliseconds(),
-  );
-  ctx.translate(105, 0);
-  ctx.fillRect(0, -12, 50, 24); // Sombra
-  ctx.drawImage(earth, -12, -12);
-
-  // La luna
-  ctx.save();
-  ctx.rotate(
-    ((2 * Math.PI) / 6) * time.getSeconds() +
-      ((2 * Math.PI) / 6000) * time.getMilliseconds(),
-  );
-  ctx.translate(0, 28.5);
-  ctx.drawImage(moon, -3.5, -3.5);
-  ctx.restore();
-
-  ctx.restore();
-
-  ctx.beginPath();
-  ctx.arc(150, 150, 105, 0, Math.PI * 2, false); // Órbita terrestre
-  ctx.stroke();
-
-  ctx.drawImage(sun, 0, 0, 300, 300);
-
-  window.requestAnimationFrame(draw);
-}
-
-init();
-
-// ------------------------------------ RELOJ ----------------------------------------- //
-
-function clock() {
-  let now = new Date();
-  const canvas = document.getElementById("canvasReloj");
-  const ctx = canvas.getContext("2d");
-  
-  // Obtener el tamaño del canvas
-  const canvasWidth = canvas.width;
-  const canvasHeight = canvas.height;
-
-  ctx.save();
-  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-  
-  // Traducir al centro del canvas
-  ctx.translate(canvasWidth / 2, canvasHeight / 2); // Centrar el reloj en el canvas
-  ctx.scale(0.7, 0.7); // Para aumentar y disminuir el tamaño del reloj
-  ctx.rotate(-Math.PI / 2);
-  ctx.strokeStyle = "black";
-  ctx.fillStyle = "white";
-  ctx.lineWidth = 8;
-  ctx.lineCap = "round";
-
-  // Aguja de la hora
-  ctx.save();
-  for (let i = 0; i < 12; i++) {
-    ctx.beginPath();
-    ctx.rotate(Math.PI / 6);
-    ctx.moveTo(100, 0);
-    ctx.lineTo(120, 0);
-    ctx.stroke();
+    this.dx = 1 * this.speed; // dx y dy es la direccion
+    this.dy = 1 * this.speed;
   }
-  ctx.restore();
 
-  // Aguja del minuto
-  ctx.save();
-  ctx.lineWidth = 5;
-  for (i = 0; i < 60; i++) {
-    if (i % 5 != 0) {
-      ctx.beginPath();
-      ctx.moveTo(117, 0);
-      ctx.lineTo(120, 0);
-      ctx.stroke();
+  draw(context) { //DIBUJA EL CIRCULO
+    //Rellena el objeto
+    context.beginPath();
+    context.arc(this.posX, this.posY, this.radius, 0, Math.PI * 2, false);
+    context.fillStyle = this.backcolor;
+    context.fill();
+
+    //Dibuja la línea del objeto
+    context.lineWidth = 5;
+    context.strokeStyle = this.color;
+    context.stroke();
+
+    //Dibuja el texto al centro del objeto
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.font = "bold 20px cursive";
+    context.fillStyle = "white";
+    context.fillText(this.text, this.posX, this.posY);
+
+    context.closePath();
+  }
+
+  update(context) { // ES UN METODO QUE PERMITE MOVER EL OBJETO
+    this.draw(context);
+
+    //Si el circulo supera el margen derecho entonces se mueve a la izquierda
+    if (this.posX + this.radius > window_width || this.posX - this.radius < 0) {
+      this.dx = -this.dx;
     }
-    ctx.rotate(Math.PI / 30);
+
+    //Si el circulo supera el margen superior entonces se mueve a abajo
+    if (this.posY + this.radius > window_height || this.posY - this.radius < 0) {
+      this.dy = -this.dy;
+    }
+
+    this.posX += this.dx; //POSICION DE LA PELOTA 
+    this.posY += this.dy;
   }
-  ctx.restore();
+} 
 
-  let sec = now.getSeconds();
-  let min = now.getMinutes();
-  let hr = now.getHours();
-  hr = hr >= 12 ? hr - 12 : hr;
+/* let randomRadius = Math.floor(Math.random() * 60 + 20);
+let randomX = Math.random() * window_width; 
+let randomY = Math.random() * window_height;
+let randomBackcolor = "rgb(" + Math.random() * 255 + "," + Math.random() * 255 + "," + Math.random() * 255 + ")";
+let randomStrokecolor = "rgb(" + Math.random() * 255 + "," + Math.random() * 255 + "," + Math.random() * 255 + ")";
 
-  ctx.fillStyle = "black";
+randomX = randomX < randomRadius ? randomRadius : randomX > window_width - randomRadius ? window_width - randomRadius : randomX; 
+randomY = randomY < randomRadius ? randomRadius : randomY > window_height - randomRadius ? window_height - randomRadius : randomY;
 
-  // Escribimos la hora
-  ctx.save();
-  ctx.rotate(
-    hr * (Math.PI / 6) + (Math.PI / 360) * min + (Math.PI / 21600) * sec
-  );
-  ctx.lineWidth = 14;
-  ctx.beginPath();
-  ctx.moveTo(-20, 0);
-  ctx.lineTo(80, 0);
-  ctx.stroke();
-  ctx.restore();
+let miCirculo = new Circle(randomX, randomY, randomRadius, randomStrokecolor, "1", randomBackcolor, 1);
+miCirculo.draw(ctx);
 
-  // Escribimos los minutos
-  ctx.save();
-  ctx.rotate((Math.PI / 30) * min + (Math.PI / 1800) * sec);
-  ctx.lineWidth = 10;
-  ctx.beginPath();
-  ctx.moveTo(-28, 0);
-  ctx.lineTo(112, 0);
-  ctx.stroke();
-  ctx.restore();
+let coordX = document.getElementById("coordX");
+let coordY = document.getElementById("coordY");
 
-  // Escribimos los segundos
-  ctx.save();
-  ctx.rotate((sec * Math.PI) / 30);
-  ctx.strokeStyle = "#D40000";
-  ctx.fillStyle = "#D40000";
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.moveTo(-30, 0);
-  ctx.lineTo(83, 0);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(0, 0, 10, 0, Math.PI * 2, true);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(95, 0, 10, 0, Math.PI * 2, true);
-  ctx.stroke();
-  ctx.fillStyle = "rgba(0,0,0,0)";
-  ctx.arc(0, 0, 3, 0, Math.PI * 2, true);
-  ctx.fill();
-  ctx.restore();
+let updateCircle = function () {
+  requestAnimationFrame(updateCircle); //ES UN METODO QUE PERMITE DIBUJAR CONSTANTEMENTE EL ESCENARIO 
+  ctx.clearRect(0, 0, window_width, window_height);
+  miCirculo.update(ctx);
 
-  ctx.beginPath();
-  ctx.lineWidth = 14;
-  ctx.strokeStyle = "#325FA2";
-  ctx.arc(0, 0, 142, 0, Math.PI * 2, true);
-  ctx.stroke();
+updateCircle(); */
 
-  ctx.restore();
+const nCircles = 10;
+let circles = [];
 
-  window.requestAnimationFrame(clock);
+for (let i = 0; i < nCircles; i++) {
+  let randomRadius = Math.floor(Math.random() * 30 + 20);
+  let randomX = Math.random() * window_width;
+  let randomY = Math.random() * window_height;
+  let randomBackcolor = "rgba(" + Math.random() * 255 + "," + Math.random() * 255 + "," + Math.random() * 255 + ")";
+  let randomStrokecolor = "rgba(" + Math.random() * 255 + "," + Math.random() * 255 + "," + Math.random() * 255 + ")";
+  let ramdomSpeed = Math.random() * 1 + 3;
+
+  randomX = randomX < randomRadius ? randomRadius : randomX > window_width - randomRadius ? window_width - randomRadius : randomX;
+  randomY = randomY < randomRadius ? randomRadius : randomY > window_height - randomRadius ? window_height - randomRadius : randomY;
+
+  let miCirculo = new Circle(randomX, randomY, randomRadius, randomStrokecolor, i+1, randomBackcolor, 2);
+  circles.push(miCirculo);
 }
 
-window.requestAnimationFrame(clock);
+const coordTableBody = document.getElementById('coordTable').querySelector('tbody');
 
-// ------------------------------------ PANORAMA EN BUCLE ----------------------------------------- //
+let updateCircle = function () {
+  requestAnimationFrame(updateCircle);
+  ctx.clearRect(0, 0, window_width, window_height);
+  
+  // Limpiar la tabla antes de agregar las nuevas coordenadas
+  coordTableBody.innerHTML = '';
 
-let img = new Image();
+  circles.forEach((circle, index) => {
+    circle.update(ctx);
 
-img.src = "fotopanoramica.jpeg";
-let CanvasXSize = 900;  // Asegúrate de que coincida con el ancho del canvas en el HTML
-let CanvasYSize = 300;  // Asegúrate de que coincida con la altura del canvas en el HTML
-let speed = 30; // Más bajo es más rápido
-let scale = 1.05;
+    // Crear una nueva fila para la tabla
+    const row = document.createElement('tr');
 
-// Programa principal
-let dx = 0.75;
-let imgW;
-let imgH;
-let x = 0;
-let clearX;
-let clearY;
-let ctxPanorama;
-let y;
+    // Crear celdas para el objeto, X y Y
+    const cellObject = document.createElement('td');
+    cellObject.textContent = circle.text;
+    cellObject.classList.add('center-text');
+    const cellX = document.createElement('td');
+    cellX.textContent = Math.round(circle.posX);
+    const cellY = document.createElement('td');
+    cellY.textContent = Math.round(circle.posY);
 
-img.onload = function () {
-  imgW = img.width * scale;
-  imgH = img.height * scale;
+    // Agregar las celdas a la fila
+    row.appendChild(cellObject);
+    row.appendChild(cellX);
+    row.appendChild(cellY);
 
-  // Centrar verticalmente
-  y = (CanvasYSize - imgH) / 2;
-
-  if (imgW > CanvasXSize) {
-    // Imagen más grande que canvas
-    x = CanvasXSize - imgW;
-  }
-  if (imgW > CanvasXSize) {
-    // Ancho de imagen más grande que canvas
-    clearX = imgW;
-  } else {
-    clearX = CanvasXSize;
-  }
-  if (imgH > CanvasYSize) {
-    // Altura de la imagen más grande que canvas
-    clearY = imgH;
-  } else {
-    clearY = CanvasYSize;
-  }
-
-  // Obtener contexto de canvas
-  ctxPanorama = document.getElementById("canvasPanorama").getContext("2d");
-
-  // Establecer frecuencia de actualización
-  setInterval(drawPanorama, speed);
+    // Agregar la fila al cuerpo de la tabla
+    coordTableBody.appendChild(row);
+  });
 };
 
-function drawPanorama() {
-  ctxPanorama.clearRect(0, 0, clearX, clearY); // Limpiar el canvas
-
-  // Si la imagen es <= tamaño de Canvas
-  if (imgW <= CanvasXSize) {
-    // Reiniciar, comenzar desde el principio
-    if (x > CanvasXSize) {
-      x = -imgW + x;
-    }
-    // Dibujar image1 adicional
-    if (x > 0) {
-      ctxPanorama.drawImage(img, -imgW + x, y, imgW, imgH);
-    }
-    // Dibujar image2 adicional
-    if (x - imgW > 0) {
-      ctxPanorama.drawImage(img, -imgW * 2 + x, y, imgW, imgH);
-    }
-  }
-  // La imagen es > tamaño de Canvas
-  else {
-    // Reiniciar, comenzar desde el principio
-    if (x > CanvasXSize) {
-      x = CanvasXSize - imgW;
-    }
-    // Dibujar image adicional
-    if (x > CanvasXSize - imgW) {
-      ctxPanorama.drawImage(img, x - imgW + 1, y, imgW, imgH);
-    }
-  }
-  // Dibujar imagen
-  ctxPanorama.drawImage(img, x, y, imgW, imgH);
-  // Cantidad para moverse
-  x += dx;
-}
+updateCircle();
